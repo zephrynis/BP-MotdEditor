@@ -1,0 +1,20 @@
+info:
+  name: "MOTD Manager"
+  identifier: "motdmanager"
+  description: "View and modify Minecraft MOTDs"
+  flags: ""
+  version: "1.0"
+  target: "beta-2026-01"
+  author: "Zephrynis"
+  icon: ""
+  website: ""
+
+admin:
+  view: "view.blade.php"
+
+dashboard:
+  css: "style.css"
+  components: "components"
+
+data:
+  public: "public"
