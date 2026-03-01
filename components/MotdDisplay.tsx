@@ -45,6 +45,48 @@ interface MotdDisplayProps {
 export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const server = ServerContext.useStoreState((state) => state.server.data!);
+  const iconRef = useRef<HTMLImageElement | null>(null);
+  const pingRef = useRef<HTMLImageElement | null>(null);
+
+  // Load the server icon once per server UUID change, not on every text update.
+  // Raw fetch is used instead of getFileContents because getFileContents uses
+  // responseType: 'text', which corrupts binary PNG data during UTF-8 decoding.
+  // fetch() + blob() preserves the raw bytes and allows URL.createObjectURL().
+  useEffect(() => {
+    const fallbackIcon = "{webroot/public}/defaulticon.png";
+    let iconObjectUrl: string | null = null;
+    const img = new Image();
+    img.onload = () => { iconRef.current = img; };
+
+    const loadIcon = async () => {
+      try {
+        const response = await fetch(`/api/client/servers/${server.uuid}/files/contents?file=/server-icon.png`, {
+          headers: { 'Accept': 'image/png' }
+        });
+        if (!response.ok) throw new Error('Icon not found');
+        const blob = await response.blob();
+        iconObjectUrl = URL.createObjectURL(blob);
+        img.src = iconObjectUrl;
+      } catch {
+        img.src = fallbackIcon;
+      }
+    };
+
+    loadIcon();
+
+    return () => {
+      iconRef.current = null;
+      if (iconObjectUrl) URL.revokeObjectURL(iconObjectUrl);
+    };
+  }, [server.uuid]);
+
+  // Load the ping image once — it is a static asset that never changes.
+  useEffect(() => {
+    const ping = new Image();
+    ping.onload = () => { pingRef.current = ping; };
+    ping.src = "{webroot/public}/ping.png";
+    return () => { pingRef.current = null; };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,38 +114,6 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
     const parsedLineTwo = parseMinecraftText(automateEmojiTextPresentation(lineTwo) || "Test");
 
     let animationFrameId: number;
-
-    const icon = new Image();
-    let isIconLoaded = false;
-    let iconObjectUrl: string | null = null;
-
-    icon.onload = () => { isIconLoaded = true; };
-
-    const fallbackIcon = "{webroot/public}/defaulticon.png";
-
-    // Raw fetch is used instead of getFileContents because getFileContents uses
-    // responseType: 'text', which corrupts binary PNG data during UTF-8 decoding.
-    // fetch() + blob() preserves the raw bytes and allows URL.createObjectURL().
-    const loadIcon = async () => {
-      try {
-        const response = await fetch(`/api/client/servers/${server.uuid}/files/contents?file=/server-icon.png`, {
-          headers: { 'Accept': 'image/png' }
-        });
-        if (!response.ok) throw new Error('Icon not found');
-        const blob = await response.blob();
-        iconObjectUrl = URL.createObjectURL(blob);
-        icon.src = iconObjectUrl;
-      } catch {
-        icon.src = fallbackIcon;
-      }
-    };
-
-    loadIcon();
-
-    const ping = new Image();
-    let isPingLoaded = false;
-    ping.onload = () => { isPingLoaded = true; };
-    ping.src = "{webroot/public}/ping.png";
 
     const render = () => {
       ctx.clearRect(0, 0, logicalWidth, logicalHeight);
@@ -181,12 +191,12 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
         drawSegments(parsedLineTwo, 37, 30);
       }
 
-      if (isIconLoaded) {
-        ctx.drawImage(icon, 2, 2, 32, 32);
+      if (iconRef.current) {
+        ctx.drawImage(iconRef.current, 2, 2, 32, 32);
       }
 
-      if (isPingLoaded) {
-        ctx.drawImage(ping, 290, 2, 10, 7)
+      if (pingRef.current) {
+        ctx.drawImage(pingRef.current, 290, 2, 10, 7);
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -196,10 +206,9 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      if (iconObjectUrl) URL.revokeObjectURL(iconObjectUrl);
     };
 
-  }, [title, lineOne, lineTwo, server.uuid]);
+  }, [title, lineOne, lineTwo]);
 
   return (
     <canvas
