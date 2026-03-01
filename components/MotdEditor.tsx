@@ -3,7 +3,7 @@ import tw from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from "@/components/elements/TitledGreyBox";
 import { Textarea } from "@/components/elements/Input";
-import Button from "@/components/elements/Button";
+import { Button } from '@/components/elements/button/index';
 import MotdDisplay from "./MotdDisplay"
 import { ServerContext } from '@/state/server';
 import getFileContents from '@/api/server/files/getFileContents';
@@ -108,7 +108,7 @@ export default () => {
             <TitledGreyBox title={'Editor'}>
               <Textarea value={lineOne + (lineTwo ? ("\n" + lineTwo) : "")} onChange={textAreaChange} rows={2} />
               <div css={tw`mt-4 flex items-center`}>
-                <Button onClick={handleSave} isLoading={isSaving} color={'green'}>
+                <Button type={'button'} onClick={handleSave} disabled={isSaving}>
                     Save
                 </Button>
                 {saveError && (
