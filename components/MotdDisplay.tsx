@@ -81,6 +81,9 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
 
     const fallbackIcon = "{webroot/public}/defaulticon.png";
 
+    // Raw fetch is used instead of getFileContents because getFileContents uses
+    // responseType: 'text', which corrupts binary PNG data during UTF-8 decoding.
+    // fetch() + blob() preserves the raw bytes and allows URL.createObjectURL().
     const loadIcon = async () => {
       try {
         const response = await fetch(`/api/client/servers/${server.uuid}/files/contents?file=/server-icon.png`, {
