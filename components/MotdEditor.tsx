@@ -64,18 +64,35 @@ export default () => {
             const content = await getFileContents(server.uuid, PROPERTIES_FILE);
             const lines = content.split('\n');
 
-            const filtered = lines.filter(
-                line => !line.startsWith('# motd-input:') && !line.startsWith('motd=')
-            );
-
             const rawInput = lineTwo ? `${lineOne}\\n${lineTwo}` : lineOne;
             const legacyLineOne = miniMessageToLegacy(lineOne);
             const legacyLineTwo = lineTwo ? miniMessageToLegacy(lineTwo) : '';
             const legacyMotd = legacyLineTwo ? `${legacyLineOne}\\n${legacyLineTwo}` : legacyLineOne;
-            filtered.push(`# motd-input: ${rawInput}`);
-            filtered.push(`motd=${legacyMotd}`);
 
-            await saveFileContents(server.uuid, PROPERTIES_FILE, filtered.join('\n') + '\n');
+            const motdIndex = lines.findIndex(line => line.startsWith('motd='));
+            const inputIndex = lines.findIndex(line => line.startsWith('# motd-input:'));
+
+            if (motdIndex !== -1) {
+                // Update motd= in-place to preserve its position in the file
+                lines[motdIndex] = `motd=${legacyMotd}`;
+                if (inputIndex !== -1) {
+                    // Update the existing motd-input comment in-place too
+                    lines[inputIndex] = `# motd-input: ${rawInput}`;
+                } else {
+                    // Insert the motd-input comment on the line just before motd=
+                    lines.splice(motdIndex, 0, `# motd-input: ${rawInput}`);
+                }
+            } else {
+                // No motd= line found; append both at the end
+                if (inputIndex !== -1) {
+                    lines[inputIndex] = `# motd-input: ${rawInput}`;
+                } else {
+                    lines.push(`# motd-input: ${rawInput}`);
+                }
+                lines.push(`motd=${legacyMotd}`);
+            }
+
+            await saveFileContents(server.uuid, PROPERTIES_FILE, lines.join('\n'));
         } catch (e) {
             console.error('Failed to save server.properties:', e);
             setSaveError('Failed to save. Please try again.');
