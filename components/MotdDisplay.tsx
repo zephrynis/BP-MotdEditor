@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import tw from 'twin.macro';
 import { parseMinecraftText, TextSegment, getShadowColor, getMatchingObfuscatedChar, automateEmojiTextPresentation } from './minecraft-text';
+import { ServerContext } from '@/state/server';
 
 // Global cache to store characters by their rendered width and font style
 const charCache: Record<string, string[]> = {};
@@ -43,6 +44,7 @@ interface MotdDisplayProps {
 
 export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const server = ServerContext.useStoreState((state) => state.server.data!);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -73,8 +75,27 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
 
     const icon = new Image();
     let isIconLoaded = false;
+    let iconObjectUrl: string | null = null;
+
     icon.onload = () => { isIconLoaded = true; };
-    icon.src = "{webroot/public}/defaulticon.png";
+
+    const fallbackIcon = "{webroot/public}/defaulticon.png";
+
+    const loadIcon = async () => {
+      try {
+        const response = await fetch(`/api/client/servers/${server.uuid}/files/contents?file=/server-icon.png`, {
+          headers: { 'Accept': 'image/png' }
+        });
+        if (!response.ok) throw new Error('Icon not found');
+        const blob = await response.blob();
+        iconObjectUrl = URL.createObjectURL(blob);
+        icon.src = iconObjectUrl;
+      } catch {
+        icon.src = fallbackIcon;
+      }
+    };
+
+    loadIcon();
 
     const ping = new Image();
     let isPingLoaded = false;
@@ -172,9 +193,10 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      if (iconObjectUrl) URL.revokeObjectURL(iconObjectUrl);
     };
 
-  }, [title, lineOne, lineTwo]);
+  }, [title, lineOne, lineTwo, server.uuid]);
 
   return (
     <canvas
