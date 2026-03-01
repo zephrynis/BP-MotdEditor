@@ -8,6 +8,7 @@ import MotdDisplay from "./MotdDisplay"
 import { ServerContext } from '@/state/server';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
+import { miniMessageToLegacy } from './minecraft-text';
 
 const PROPERTIES_FILE = '/server.properties';
 
@@ -68,8 +69,11 @@ export default () => {
             );
 
             const rawInput = lineTwo ? `${lineOne}\\n${lineTwo}` : lineOne;
+            const legacyLineOne = miniMessageToLegacy(lineOne);
+            const legacyLineTwo = lineTwo ? miniMessageToLegacy(lineTwo) : '';
+            const legacyMotd = legacyLineTwo ? `${legacyLineOne}\\n${legacyLineTwo}` : legacyLineOne;
             filtered.push(`# motd-input: ${rawInput}`);
-            filtered.push(`motd=${rawInput}`);
+            filtered.push(`motd=${legacyMotd}`);
 
             await saveFileContents(server.uuid, PROPERTIES_FILE, filtered.join('\n') + '\n');
         } catch (e) {

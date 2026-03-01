@@ -241,6 +241,62 @@ function computeStyle(tags: ActiveTag[]): Partial<InternalTextSegment> {
   return style;
 }
 
+// Maps the 16 named Minecraft colors back to their legacy §-code digits.
+const HEX_TO_LEGACY_CODE: Record<string, string> = {
+  "#000000": "0",
+  "#0000AA": "1",
+  "#00AA00": "2",
+  "#00AAAA": "3",
+  "#AA0000": "4",
+  "#AA00AA": "5",
+  "#FFAA00": "6",
+  "#AAAAAA": "7",
+  "#555555": "8",
+  "#5555FF": "9",
+  "#55FF55": "a",
+  "#55FFFF": "b",
+  "#FF5555": "c",
+  "#FF55FF": "d",
+  "#FFFF55": "e",
+  "#FFFFFF": "f",
+};
+
+function colorToLegacyCode(color: string): string {
+  const upper = color.toUpperCase();
+  const named = HEX_TO_LEGACY_CODE[upper];
+  if (named) return `\u00A7${named}`;
+  // BungeeCord hex format: §x§R§R§G§G§B§B
+  // color is always a valid 6-digit hex string produced by parseMinecraftText
+  const hex = upper.replace('#', '').padStart(6, '0');
+  return `\u00A7x${hex.split('').map(c => `\u00A7${c}`).join('')}`;
+}
+
+/**
+ * Converts a MiniMessage (or legacy §/& coded) string to Minecraft legacy
+ * §-code format suitable for use in the `motd=` line of server.properties.
+ * Gradients are expanded to per-character §x hex codes.
+ * Input colors are expected to be valid 6-digit hex strings (as produced by
+ * parseMinecraftText), e.g. "#FF5555".
+ */
+export function miniMessageToLegacy(text: string): string {
+  const segments = parseMinecraftText(text);
+  let result = '';
+  for (const seg of segments) {
+    if (!seg.text) continue;
+    // Reset all formatting before each segment to prevent bleeding from previous
+    // segments (e.g. bold or color carrying into unstyled text).
+    result += '\u00A7r';
+    if (seg.color) result += colorToLegacyCode(seg.color);
+    if (seg.obfuscated) result += '\u00A7k';
+    if (seg.bold) result += '\u00A7l';
+    if (seg.strikethrough) result += '\u00A7m';
+    if (seg.underlined) result += '\u00A7n';
+    if (seg.italic) result += '\u00A7o';
+    result += seg.text;
+  }
+  return result;
+}
+
 export function getShadowColor(hex: string) {
   if (hex.startsWith("#")) {
     const fullHex = hex.length === 4
