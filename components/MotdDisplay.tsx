@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import tw from 'twin.macro';
-import { ServerContext } from '@/state/server';
 import { parseMinecraftText, TextSegment, getShadowColor, getMatchingObfuscatedChar, automateEmojiTextPresentation } from './minecraft-text';
 
 // Global cache to store characters by their rendered width and font style
@@ -43,7 +42,6 @@ interface MotdDisplayProps {
 }
 
 export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
-  const server = ServerContext.useStoreState((state) => state.server.data!);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -76,12 +74,12 @@ export default ({ title, lineOne, lineTwo }: MotdDisplayProps) => {
     const icon = new Image();
     let isIconLoaded = false;
     icon.onload = () => { isIconLoaded = true; };
-    icon.src = "https://panel1.zephmc.dev/extensions/motdmanager/defaulticon.png";
+    icon.src = "{webroot/public}/defaulticon.png";
 
     const ping = new Image();
     let isPingLoaded = false;
     ping.onload = () => { isPingLoaded = true; };
-    ping.src = "https://panel1.zephmc.dev/extensions/motdmanager/ping.png";
+    ping.src = "{webroot/public}/ping.png";
 
     const render = () => {
       ctx.clearRect(0, 0, logicalWidth, logicalHeight);

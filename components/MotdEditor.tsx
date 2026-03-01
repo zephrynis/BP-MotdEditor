@@ -13,7 +13,6 @@ export default () => {
     const server = ServerContext.useStoreState((state) => state.server.data!);
     const [lineOne, setLineOne] = useState("");
     const [lineTwo, setLineTwo] = useState("");
-    const [textArea, setTextArea] = useState("");
     // const [properties, setProperties] = useState("");
 
     const textAreaChange = (e) => {
