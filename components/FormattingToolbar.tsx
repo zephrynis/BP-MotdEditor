@@ -143,12 +143,12 @@ export default function FormattingToolbar({ textareaRef, value, onChange }: Form
 
             {/* Section 2: Named color swatches */}
             <div css={tw`flex flex-wrap gap-1`}>
-                {Object.entries(COLOR_MAP).map(([name, hex]) => (
+                {Object.entries(COLOR_MAP).map(([colorName, hex]) => (
                     <button
-                        key={name}
+                        key={colorName}
                         type='button'
-                        title={name}
-                        onClick={() => handleInsert('<' + name + '>', '</' + name + '>')}
+                        title={colorName}
+                        onClick={() => handleInsert('<' + colorName + '>', '</' + colorName + '>')}
                         css={tw`rounded-full hover:opacity-80`}
                         style={{
                             backgroundColor: hex,
