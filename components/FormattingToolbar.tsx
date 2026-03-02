@@ -148,7 +148,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }: Form
                         key={name}
                         type='button'
                         title={name}
-                        onClick={() => handleInsert(`<${name}>`, `</${name}>`)}
+                        onClick={() => handleInsert('<' + name + '>', '</' + name + '>')}
                         css={tw`rounded-full hover:opacity-80`}
                         style={{
                             backgroundColor: hex,
