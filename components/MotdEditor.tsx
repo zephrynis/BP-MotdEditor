@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import tw from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from "@/components/elements/TitledGreyBox";
@@ -9,6 +9,7 @@ import { ServerContext } from '@/state/server';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
 import { miniMessageToLegacy } from './minecraft-text';
+import FormattingToolbar from './FormattingToolbar';
 
 const PROPERTIES_FILE = '/server.properties';
 
@@ -18,6 +19,7 @@ export default () => {
     const [lineTwo, setLineTwo] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         const loadMotd = async () => {
@@ -106,7 +108,12 @@ export default () => {
         <div css={tw`md:flex`}>
           <div css={tw`flex-1`}>
             <TitledGreyBox title={'Editor'}>
-              <Textarea value={lineOne + (lineTwo ? ("\n" + lineTwo) : "")} onChange={textAreaChange} rows={2} />
+              <FormattingToolbar
+                textareaRef={textareaRef}
+                value={lineOne + (lineTwo ? ('\n' + lineTwo) : '')}
+                onChange={textAreaChange}
+              />
+              <Textarea ref={textareaRef} value={lineOne + (lineTwo ? ("\n" + lineTwo) : "")} onChange={textAreaChange} rows={2} />
               <div css={tw`mt-4 flex items-center`}>
                 <Button type={'button'} onClick={handleSave} disabled={isSaving}>
                     Save
